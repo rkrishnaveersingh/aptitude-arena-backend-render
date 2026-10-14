@@ -25,6 +25,10 @@ public class QuestionService {
         return questionRepository.findWithSubjectBySubjectId(subjectId);
     }
 
+    public List<Question> findByExam(UUID examId) {
+        return questionRepository.findWithSubjectByExamId(examId);
+    }
+
     public Question save(Question question) {
         return questionRepository.save(question);
     }

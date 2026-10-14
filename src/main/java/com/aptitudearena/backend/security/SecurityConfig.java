@@ -48,6 +48,7 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.GET, "/api/exams", "/api/exams/**").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/subjects", "/api/subjects/**").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/questions", "/api/questions/**").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/papers", "/api/papers/**").permitAll()
 
                 // Everything else requires authentication
                 .anyRequest().authenticated()

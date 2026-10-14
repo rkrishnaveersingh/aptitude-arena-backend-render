@@ -65,18 +65,22 @@ public class DevelopmentExamSeeder implements CommandLineRunner {
         Exam exam = examRepository.findBySlug(EXAM_SLUG)
             .or(() -> examRepository.findFirstByName("Quantitative Aptitude Practice Test"))
             .orElse(null);
+        boolean examChanged = false;
         if (exam == null) {
             if (examRepository.count() > 0) {
                 return;
             }
             exam = createExam(questions, subject);
             exam = examRepository.save(exam);
-        } else {
-            exam.getSubjects().add(subject);
         }
 
-        exam.setDurationMinutes(15);
-        exam.setUpdatedAt(OffsetDateTime.now());
+        if (exam.getSubjects().add(subject)) {
+            examChanged = true;
+        }
+        if (!java.util.Objects.equals(exam.getDurationMinutes(), 15)) {
+            exam.setDurationMinutes(15);
+            examChanged = true;
+        }
 
         List<ExamQuestion> examQuestions = new ArrayList<>(
                 examQuestionRepository.findByExam_IdOrderByQuestionOrderAsc(exam.getId()));
@@ -94,26 +98,44 @@ public class DevelopmentExamSeeder implements CommandLineRunner {
             examQuestion.setExam(exam);
             examQuestion.setQuestion(question);
             examQuestions.add(examQuestion);
+            examChanged = true;
         }
 
-        int maxOrder = examQuestions.stream()
-                .map(ExamQuestion::getQuestionOrder)
-                .filter(order -> order != null)
-                .max(Integer::compareTo)
-                .orElse(0);
-        int temporaryOrder = maxOrder + 1;
+        boolean questionOrderChanged = false;
         for (int index = 0; index < examQuestions.size(); index++) {
-            examQuestions.get(index).setQuestionOrder(temporaryOrder + index);
+            if (!java.util.Objects.equals(examQuestions.get(index).getQuestionOrder(), index + 1)) {
+                questionOrderChanged = true;
+                break;
+            }
         }
-        examQuestionRepository.saveAllAndFlush(examQuestions);
 
-        for (int index = 0; index < examQuestions.size(); index++) {
-            examQuestions.get(index).setQuestionOrder(index + 1);
+        if (questionOrderChanged) {
+            int maxOrder = examQuestions.stream()
+                    .map(ExamQuestion::getQuestionOrder)
+                    .filter(java.util.Objects::nonNull)
+                    .max(Integer::compareTo)
+                    .orElse(0);
+            int temporaryOrder = maxOrder + 1;
+            for (int index = 0; index < examQuestions.size(); index++) {
+                examQuestions.get(index).setQuestionOrder(temporaryOrder + index);
+            }
+            examQuestionRepository.saveAllAndFlush(examQuestions);
+
+            for (int index = 0; index < examQuestions.size(); index++) {
+                examQuestions.get(index).setQuestionOrder(index + 1);
+            }
+            examQuestionRepository.saveAllAndFlush(examQuestions);
+            examChanged = true;
         }
-        examQuestionRepository.saveAllAndFlush(examQuestions);
 
-        exam.setTotalQuestions(examQuestions.size());
-        examRepository.save(exam);
+        if (!java.util.Objects.equals(exam.getTotalQuestions(), examQuestions.size())) {
+            exam.setTotalQuestions(examQuestions.size());
+            examChanged = true;
+        }
+        if (examChanged) {
+            exam.setUpdatedAt(OffsetDateTime.now());
+            examRepository.save(exam);
+        }
     }
 
     private Exam createExam(List<Question> questions, Subject subject) {

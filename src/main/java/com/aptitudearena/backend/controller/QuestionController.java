@@ -46,7 +46,15 @@ public class QuestionController {
 
     @GetMapping
     public List<QuestionResponse> findBySubject(@RequestParam UUID subjectId) {
-        List<Question> questions = questionService.findBySubject(subjectId);
+        return toResponses(questionService.findBySubject(subjectId));
+    }
+
+    @GetMapping("/exam/{examId}")
+    public List<QuestionResponse> findByExam(@PathVariable UUID examId) {
+        return toResponses(questionService.findByExam(examId));
+    }
+
+    private List<QuestionResponse> toResponses(List<Question> questions) {
         Map<UUID, List<QuestionOptionRepository.OptionView>> optionsByQuestionId = questions.isEmpty()
             ? Map.of()
             : questionOptionRepository.findOptionsByQuestionIds(

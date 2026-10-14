@@ -15,6 +15,15 @@ public interface QuestionRepository extends JpaRepository<Question, UUID> {
 	@Query("select question from Question question join fetch question.subject where question.subject.id = :subjectId")
 	List<Question> findWithSubjectBySubjectId(@Param("subjectId") UUID subjectId);
 
+	@Query("""
+			select question from Question question
+			join fetch question.subject
+			where question.subject.id in (
+				select subject.id from Exam exam join exam.subjects subject where exam.id = :examId
+			)
+			""")
+	List<Question> findWithSubjectByExamId(@Param("examId") UUID examId);
+
 	@Query("select question from Question question join fetch question.subject where question.id = :id")
 	Optional<Question> findWithSubjectById(@Param("id") UUID id);
 }
